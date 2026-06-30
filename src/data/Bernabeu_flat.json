@@ -6277,7 +6277,57 @@
       "x": 474,
       "y": 616,
       "width": 552,
-      "height": 377
+      "height": 377,
+      "strokeWidth": 2
+    },
+    "centerLine": {
+      "x": 750,
+      "y1": 616,
+      "y2": 993
+    },
+    "centerCircle": {
+      "cx": 750,
+      "cy": 804.5,
+      "r": 56.67
+    },
+    "centerDot": {
+      "cx": 750,
+      "cy": 804.5,
+      "r": 3
+    },
+    "penaltyLeft": {
+      "x": 474,
+      "y": 727,
+      "width": 88,
+      "height": 155
+    },
+    "goalLeft": {
+      "x": 474,
+      "y": 759,
+      "width": 33,
+      "height": 91
+    },
+    "penaltyRight": {
+      "x": 938,
+      "y": 727,
+      "width": 88,
+      "height": 155
+    },
+    "goalRight": {
+      "x": 993,
+      "y": 759,
+      "width": 33,
+      "height": 91
+    },
+    "penaltySpotLeft": {
+      "cx": 590,
+      "cy": 804.5,
+      "r": 2
+    },
+    "penaltySpotRight": {
+      "cx": 910,
+      "cy": 804.5,
+      "r": 2
     }
   }
 }
