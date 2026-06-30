@@ -9,7 +9,7 @@ export interface StadiumData {
   stadium: string;
   viewBox: string;
   pitch: any;
-  sections: { id: string; points: number[]; label: string | null; cx: number; cy: number }[];
+  sections: { id: string; points: number[]; label: string | null; cx: number; cy: number; technical?: boolean }[];
 }
 
 interface Props {
@@ -34,7 +34,7 @@ const inRange = (id: string, range: [number, number] | null | undefined): boolea
 
 // ── Section block ──────────────────────────────────────
 const SectionBlock: React.FC<{
-  section: { id: string; points: number[]; label: string | null; cx: number; cy: number };
+  section: { id: string; points: number[]; label: string | null; cx: number; cy: number; technical?: boolean };
   isActive: boolean;
   isHovered: boolean;
   isHighlighted: boolean;
@@ -42,7 +42,7 @@ const SectionBlock: React.FC<{
   onHover: (id: string | null) => void;
   onClick: (id: string) => void;
 }> = ({ section, isActive, isHovered, isHighlighted, scale, onHover, onClick }) => {
-  const isTech = section.id.startsWith("0") || section.id.startsWith("technical");
+  const isTech = section.technical === true;
 
   // Priority: active > hovered > highlighted > default
   const fill = isActive ? "#1d4ed8" : isHovered ? "#3b82f6" : isHighlighted ? "#f59e0b" : "#1e293b";
@@ -59,6 +59,7 @@ const SectionBlock: React.FC<{
         onMouseEnter={(e) => { if (isTech) return; e.target.getStage()!.container().style.cursor = "pointer"; onHover(section.id); }}
         onMouseLeave={(e) => { if (isTech) return; e.target.getStage()!.container().style.cursor = "default"; onHover(null); }}
         onClick={() => !isTech && onClick(section.id)}
+        onTap={() => !isTech && onClick(section.id)}
         listening={!isTech}
       />
       {section.label && !isTech && (
@@ -87,6 +88,12 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
   const [isPanning, setIsPanning] = useState(false);
+
+  // Pinch zoom tracking
+  const pinchRef = useRef<{ dist: number | null; zoom: number; cx: number; cy: number }>({
+    dist: null, zoom: 1, cx: 0, cy: 0,
+  });
+  const [dragEnabled, setDragEnabled] = useState(true);
 
   useEffect(() => {
     const h = () => { if (containerRef.current) setStageSize({ width: containerRef.current.offsetWidth, height: containerRef.current.offsetHeight }); };
@@ -129,9 +136,42 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
     setIsPanning(false);
   };
 
-  // ── Double-click: reset ─────────────────────────────────
+  // ── Double-click / double-tap: reset ────────────────────
   const handleDoubleClick = () => {
     setZoom(1); setPanX(0); setPanY(0);
+  };
+
+  // ── Pinch zoom (mobile) ─────────────────────────────────
+  const handleTouchMove = (e: any) => {
+    const stage = e.target.getStage();
+    if (!stage) return;
+    const touches = e.evt.touches;
+    if (touches.length === 2) {
+      setDragEnabled(false); // disable drag during pinch
+      const p1 = { x: touches[0].clientX, y: touches[0].clientY };
+      const p2 = { x: touches[1].clientX, y: touches[1].clientY };
+      const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const cx = (p1.x + p2.x) / 2;
+      const cy = (p1.y + p2.y) / 2;
+
+      if (pinchRef.current.dist !== null) {
+        const ratio = dist / pinchRef.current.dist;
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchRef.current.zoom * ratio));
+        // Scale pan to keep pinch center fixed
+        const scaleChange = newZoom / pinchRef.current.zoom;
+        setPanX(cx - (cx - pinchRef.current.cx) * scaleChange);
+        setPanY(cy - (cy - pinchRef.current.cy) * scaleChange);
+        setZoom(newZoom);
+      }
+      pinchRef.current = { dist, zoom, cx, cy };
+    }
+  };
+
+  const handleTouchEnd = (e: any) => {
+    if (e.evt.touches.length < 2) {
+      pinchRef.current.dist = null;
+      setDragEnabled(true);
+    }
   };
 
   return (
@@ -143,17 +183,23 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
         background: "#000", overflow: "hidden",
         cursor: isPanning ? "grabbing" : "grab",
         position: "relative",
+        touchAction: "none",
+        WebkitUserSelect: "none" as any,
+        userSelect: "none" as any,
       }}
     >
       <Stage
         width={stageSize.width} height={stageSize.height}
         scaleX={zoom} scaleY={zoom}
         x={panX} y={panY}
-        draggable
+        draggable={dragEnabled}
         onWheel={handleWheel}
         onDragStart={() => setIsPanning(true)}
         onDragEnd={handleDragEnd}
         onDblClick={handleDoubleClick}
+        onDblTap={handleDoubleClick}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <Layer>
           <Group x={baseX} y={baseY} scaleX={baseScale} scaleY={baseScale}>
