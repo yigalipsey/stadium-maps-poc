@@ -79,6 +79,20 @@ const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 6.0;
 const ZOOM_SPEED = 1.08;
 
+/** Zoom toward an anchor (stage-pixel coords). Returns new {zoom, panX, panY}. */
+function zoomToward(
+  anchorX: number, anchorY: number,
+  curZoom: number, newZoom: number,
+  curPanX: number, curPanY: number,
+) {
+  const ratio = newZoom / curZoom;
+  return {
+    zoom: newZoom,
+    panX: anchorX - (anchorX - curPanX) * ratio,
+    panY: anchorY - (anchorY - curPanY) * ratio,
+  };
+}
+
 // ── Generic Stadium Map ────────────────────────────────
 export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,11 +136,8 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
     let newZoom = direction > 0 ? zoom * ZOOM_SPEED : zoom / ZOOM_SPEED;
     newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
 
-    // Keep the point under cursor fixed
-    const ratio = newZoom / zoom;
-    setPanX(pointer.x - (pointer.x - panX) * ratio);
-    setPanY(pointer.y - (pointer.y - panY) * ratio);
-    setZoom(newZoom);
+    const z = zoomToward(pointer.x, pointer.y, zoom, newZoom, panX, panY);
+    setPanX(z.panX); setPanY(z.panY); setZoom(z.zoom);
   };
 
   // ── Drag: sync Konva → React when drag ends ────────────
@@ -160,6 +171,7 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
         scaleX={zoom} scaleY={zoom}
         x={panX} y={panY}
         draggable
+        dragDistance={3}
         onWheel={handleWheel}
         onDragStart={() => setIsPanning(true)}
         onDragEnd={handleDragEnd}
@@ -170,7 +182,7 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
           <Group x={baseX} y={baseY} scaleX={baseScale} scaleY={baseScale}>
             <StadiumPitch config={data.pitch} scale={totalScale} />
             {data.sections.map((s, i) => (
-              <SectionBlock key={i} section={s} scale={totalScale} fontSize={fontSize}
+              <SectionBlock key={`${s.id}-${i}`} section={s} scale={totalScale} fontSize={fontSize}
                 isActive={selected === s.id} isHovered={hovered === s.id}
                 isHighlighted={inRange(s.id, highlightRange)}
                 onHover={setHovered} onClick={setSelected} />
@@ -189,7 +201,10 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
         <button
           onClick={() => {
             const newZoom = Math.min(MAX_ZOOM, zoom * ZOOM_SPEED);
-            setZoom(newZoom);
+            // Zoom toward stage center
+            const cx = stageSize.width / 2, cy = stageSize.height / 2;
+            const z = zoomToward(cx, cy, zoom, newZoom, panX, panY);
+            setPanX(z.panX); setPanY(z.panY); setZoom(z.zoom);
           }}
           style={{
             width: 36, height: 36, borderRadius: 8,
@@ -203,7 +218,9 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
         <button
           onClick={() => {
             const newZoom = Math.max(MIN_ZOOM, zoom / ZOOM_SPEED);
-            setZoom(newZoom);
+            const cx = stageSize.width / 2, cy = stageSize.height / 2;
+            const z = zoomToward(cx, cy, zoom, newZoom, panX, panY);
+            setPanX(z.panX); setPanY(z.panY); setZoom(z.zoom);
           }}
           style={{
             width: 36, height: 36, borderRadius: 8,
