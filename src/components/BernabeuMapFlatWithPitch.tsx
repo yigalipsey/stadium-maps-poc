@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Stage, Layer, Line, Group, Text } from "react-konva";
 import flatData from "@/data/Bernabeu_flat.json";
-import StadiumPitch, { PitchConfig } from "./StadiumPitch";
+import StadiumPitch from "./StadiumPitch";
 
 // ── Types ──────────────────────────────────────────────
 interface SectionData {
@@ -21,33 +21,8 @@ interface Props {
   setSelectedBlock?: (id: string | null) => void;
 }
 
-// ── Bernabeu Pitch Config — updated from Inkscape (2026-06-30) ──
-// No transform — raw SVG coords in Bernabeu viewBox (0 0 1500 1500)
-const BERNABEU_PITCH: PitchConfig = {
-  grass: {
-    x: 440.81622,
-    y: 589.06079,
-    width: 618.23785,
-    height: 431.42838,
-    rx: 74.93792,
-  },
-  boundary: {
-    x: 474,
-    y: 616,
-    width: 552,
-    height: 377,
-    strokeWidth: 2,
-  },
-  centerLine: { x: 750, y1: 616, y2: 993 },
-  centerCircle: { cx: 750, cy: 804.5, r: 56.67 },
-  centerDot: { cx: 750, cy: 804.5, r: 3 },
-  penaltyLeft: { x: 474, y: 727, width: 88, height: 155 },
-  goalLeft: { x: 474, y: 759, width: 33, height: 91 },
-  penaltyRight: { x: 938, y: 727, width: 88, height: 155 },
-  goalRight: { x: 993, y: 759, width: 33, height: 91 },
-  penaltySpotLeft: { cx: 590, cy: 804.5, r: 2 },
-  penaltySpotRight: { cx: 910, cy: 804.5, r: 2 },
-};
+// Pitch config now lives IN the JSON file — data.pitch
+const pitchConfig = (flatData as any).pitch;
 
 // ── Single Section ─────────────────────────────────────
 const SectionWithLabel: React.FC<{
@@ -167,8 +142,8 @@ export default function BernabeuMapFlatWithPitch({
       <Stage width={stageSize.width} height={stageSize.height}>
         <Layer>
           <Group x={groupX} y={groupY} scaleX={scale} scaleY={scale}>
-            {/* ⚽ Stadium pitch — exact SVG mirror from Bernabeu_Work.svg */}
-            <StadiumPitch config={BERNABEU_PITCH} scale={scale} />
+            {/* ⚽ Pitch config from JSON data */}
+            <StadiumPitch config={pitchConfig} scale={scale} />
             {/* Sections on top */}
             {flatData.sections.map((section, idx) => (
               <SectionWithLabel

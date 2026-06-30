@@ -27,7 +27,7 @@ const BernabeuMapFlatWithPitch = dynamic(
   }
 );
 
-export default function FlatPitchPage() {
+export default function BernabeuPage() {
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
 
@@ -75,8 +75,7 @@ export default function FlatPitchPage() {
           )}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <a href="/flat" style={{ color: "#94a3b8", fontSize: 12, fontWeight: 700, textDecoration: "none", background: "rgba(255,255,255,0.05)", padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)" }}>Flat (no pitch)</a>
-          <a href="/norm" style={{ color: "#94a3b8", fontSize: 12, fontWeight: 700, textDecoration: "none", background: "rgba(255,255,255,0.05)", padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)" }}>Normalized</a>
+          <a href="/emirates" style={{ color: "#94a3b8", fontSize: 12, fontWeight: 700, textDecoration: "none", background: "rgba(255,255,255,0.05)", padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)" }}>Emirates</a>
         </div>
       </div>
     </div>
