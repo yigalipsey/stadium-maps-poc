@@ -39,9 +39,10 @@ const SectionBlock: React.FC<{
   isHovered: boolean;
   isHighlighted: boolean;
   scale: number;
+  fontSize: number;
   onHover: (id: string | null) => void;
   onClick: (id: string) => void;
-}> = ({ section, isActive, isHovered, isHighlighted, scale, onHover, onClick }) => {
+}> = ({ section, isActive, isHovered, isHighlighted, scale, fontSize, onHover, onClick }) => {
   const isTech = section.technical === true;
 
   // Priority: active > hovered > highlighted > default
@@ -63,9 +64,11 @@ const SectionBlock: React.FC<{
         listening={!isTech}
       />
       {section.label && !isTech && (
-        <Text x={section.cx} y={section.cy} text={section.label} fontSize={16}
+        <Text x={section.cx} y={section.cy} text={section.label} fontSize={fontSize}
           fill="#facc15" fontStyle="bold" align="center" verticalAlign="middle"
-          width={60} height={30} offsetX={30} offsetY={15} listening={false} />
+          width={fontSize * 3.5} height={fontSize * 1.8}
+          offsetX={fontSize * 1.75} offsetY={fontSize * 0.9}
+          listening={false} />
       )}
     </Group>
   );
@@ -103,6 +106,9 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
   const baseY = (stageSize.height - vbH * baseScale) / 2 - vbMinY * baseScale;
 
   const totalScale = baseScale * zoom;
+
+  // Per-stadium font size — proportional to viewBox so text fits blocks
+  const fontSize = vbH * 0.011;
 
   // ── Wheel: zoom toward cursor ──────────────────────────
   const handleWheel = (e: any) => {
@@ -164,7 +170,7 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
           <Group x={baseX} y={baseY} scaleX={baseScale} scaleY={baseScale}>
             <StadiumPitch config={data.pitch} scale={totalScale} />
             {data.sections.map((s, i) => (
-              <SectionBlock key={i} section={s} scale={totalScale}
+              <SectionBlock key={i} section={s} scale={totalScale} fontSize={fontSize}
                 isActive={selected === s.id} isHovered={hovered === s.id}
                 isHighlighted={inRange(s.id, highlightRange)}
                 onHover={setHovered} onClick={setSelected} />
