@@ -48,12 +48,23 @@ const SectionBlock: React.FC<{
   );
 };
 
+// ── Zoom limits ─────────────────────────────────────────
+const MIN_ZOOM = 0.3;
+const MAX_ZOOM = 6.0;
+const ZOOM_SPEED = 1.08;
+
 // ── Generic Stadium Map ────────────────────────────────
 export default function StadiumMap({ data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+
+  // Zoom + pan — all owned by React state (no imperative stage.x() calls)
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [isPanning, setIsPanning] = useState(false);
 
   useEffect(() => {
     const h = () => { if (containerRef.current) setStageSize({ width: containerRef.current.offsetWidth, height: containerRef.current.offsetHeight }); };
@@ -62,25 +73,82 @@ export default function StadiumMap({ data }: Props) {
 
   if (stageSize.width === 0) return <div ref={containerRef} style={{ width: "100%", height: "100%", minHeight: 500 }} />;
 
+  // Fixed inner group: just the viewBox → screen mapping (never changes with zoom)
   const [vbMinX, vbMinY, vbW, vbH] = data.viewBox.split(" ").map(Number);
-  const scale = Math.min(stageSize.width / vbW, stageSize.height / vbH) * 0.9;
-  const gx = (stageSize.width - vbW * scale) / 2 - vbMinX * scale;
-  const gy = (stageSize.height - vbH * scale) / 2 - vbMinY * scale;
+  const baseScale = Math.min(stageSize.width / vbW, stageSize.height / vbH) * 0.9;
+  const baseX = (stageSize.width - vbW * baseScale) / 2 - vbMinX * baseScale;
+  const baseY = (stageSize.height - vbH * baseScale) / 2 - vbMinY * baseScale;
+
+  const totalScale = baseScale * zoom;
+
+  // ── Wheel: zoom toward cursor ──────────────────────────
+  const handleWheel = (e: any) => {
+    e.evt.preventDefault();
+    const stage = e.target.getStage();
+    if (!stage) return;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    let newZoom = direction > 0 ? zoom * ZOOM_SPEED : zoom / ZOOM_SPEED;
+    newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+
+    // Keep the point under cursor fixed
+    const ratio = newZoom / zoom;
+    setPanX(pointer.x - (pointer.x - panX) * ratio);
+    setPanY(pointer.y - (pointer.y - panY) * ratio);
+    setZoom(newZoom);
+  };
+
+  // ── Drag: sync Konva → React when drag ends ────────────
+  const handleDragEnd = (e: any) => {
+    setPanX(e.target.x());
+    setPanY(e.target.y());
+    setIsPanning(false);
+  };
+
+  // ── Double-click: reset ─────────────────────────────────
+  const handleDoubleClick = () => {
+    setZoom(1); setPanX(0); setPanY(0);
+  };
 
   return (
-    <div ref={containerRef} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#000", borderRadius: 24, overflow: "hidden" }}>
-      <Stage width={stageSize.width} height={stageSize.height}>
+    <div
+      ref={containerRef}
+      style={{
+        width: "100%", height: "100%",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "#000", borderRadius: 24, overflow: "hidden",
+        cursor: isPanning ? "grabbing" : "grab",
+        position: "relative",
+      }}
+    >
+      <Stage
+        width={stageSize.width} height={stageSize.height}
+        scaleX={zoom} scaleY={zoom}
+        x={panX} y={panY}
+        draggable
+        onWheel={handleWheel}
+        onDragStart={() => setIsPanning(true)}
+        onDragEnd={handleDragEnd}
+        onDblClick={handleDoubleClick}
+      >
         <Layer>
-          <Group x={gx} y={gy} scaleX={scale} scaleY={scale}>
-            <StadiumPitch config={data.pitch} scale={scale} />
+          <Group x={baseX} y={baseY} scaleX={baseScale} scaleY={baseScale}>
+            <StadiumPitch config={data.pitch} scale={totalScale} />
             {data.sections.map((s, i) => (
-              <SectionBlock key={i} section={s} scale={scale}
+              <SectionBlock key={i} section={s} scale={totalScale}
                 isActive={selected === s.id} isHovered={hovered === s.id}
                 onHover={setHovered} onClick={setSelected} />
             ))}
           </Group>
         </Layer>
       </Stage>
+
+      {/* Zoom badge */}
+      <div style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.7)", color: "#fff", padding: "4px 14px", borderRadius: 20, fontSize: 12, fontFamily: "monospace", pointerEvents: "none" }}>
+        {Math.round(zoom * 100)}%
+      </div>
     </div>
   );
 }
