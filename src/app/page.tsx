@@ -94,7 +94,7 @@ export default function HomePage() {
           <p style={{ fontSize: mobile ? 10 : 11, color: "#475569", fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
             Section Ranges
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {RANGES.map(([lo, hi]) => {
               const isHovered = hoverRange?.[0] === lo && hoverRange?.[1] === hi;
               const isLocked = lockedRange?.[0] === lo && lockedRange?.[1] === hi;
@@ -102,7 +102,7 @@ export default function HomePage() {
               return (
                 <button key={lo}
                   style={{
-                    padding: mobile ? "6px 4px" : "8px 6px",
+                    padding: mobile ? "8px 16px" : "10px 20px",
                     borderRadius: 8,
                     border: isActive ? "2px solid #f59e0b" : "2px solid #1e293b",
                     fontSize: mobile ? 11 : 13,
