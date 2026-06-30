@@ -14,6 +14,7 @@ export interface StadiumData {
 
 interface Props {
   data: StadiumData;
+  zoom?: number; // pre-zoom multiplier: 0.85 = smaller, 1 = default
 }
 
 // ── Section block ──────────────────────────────────────
@@ -54,7 +55,7 @@ const MAX_ZOOM = 6.0;
 const ZOOM_SPEED = 1.08;
 
 // ── Generic Stadium Map ────────────────────────────────
-export default function StadiumMap({ data }: Props) {
+export default function StadiumMap({ data, zoom: preZoom = 1 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [selected, setSelected] = useState<string | null>(null);
@@ -75,7 +76,7 @@ export default function StadiumMap({ data }: Props) {
 
   // Fixed inner group: just the viewBox → screen mapping (never changes with zoom)
   const [vbMinX, vbMinY, vbW, vbH] = data.viewBox.split(" ").map(Number);
-  const baseScale = Math.min(stageSize.width / vbW, stageSize.height / vbH) * 0.9;
+  const baseScale = Math.min(stageSize.width / vbW, stageSize.height / vbH) * 0.9 * preZoom;
   const baseX = (stageSize.width - vbW * baseScale) / 2 - vbMinX * baseScale;
   const baseY = (stageSize.height - vbH * baseScale) / 2 - vbMinY * baseScale;
 
