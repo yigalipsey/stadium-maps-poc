@@ -4,12 +4,14 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import bernabeu from "@/data/Bernabeu_flat.json";
 import emirates from "@/data/Emirates_flat.json";
+import etihad from "@/data/Etihad_flat.json";
 
 const StadiumMap = dynamic(() => import("@/components/StadiumMap"), { ssr: false });
 
 const STADIUMS = [
   { id: "bernabeu", name: "Santiago Bernabéu", city: "Madrid", country: "Spain", data: bernabeu },
   { id: "emirates", name: "Emirates Stadium", city: "London", country: "England", data: emirates },
+  { id: "etihad", name: "Etihad Stadium", city: "Manchester", country: "England", data: etihad },
 ];
 
 const RANGES: [number, number][] = [

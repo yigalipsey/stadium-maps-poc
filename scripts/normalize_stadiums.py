@@ -55,6 +55,12 @@ STADIUM_PITCH_CORNERS: dict[str, list[list[float]]] = {
         [95.0, 65.0],     # bottom-right
         [-95.0, 65.0],    # bottom-left
     ],
+    "etihad": [
+        [-77.0, -52.0],   # top-left    (estimated from pitch markings)
+        [76.0, -52.0],    # top-right
+        [76.0, 47.0],     # bottom-right
+        [-77.0, 47.0],    # bottom-left
+    ],
 }
 
 
