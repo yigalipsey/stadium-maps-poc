@@ -1,26 +1,33 @@
 "use client";
 
-import Link from "next/link";
+import React, { useState } from "react";
+import dynamic from "next/dynamic";
+import bernabeu from "@/data/Bernabeu_flat.json";
+import emirates from "@/data/Emirates_flat.json";
+
+const StadiumMap = dynamic(() => import("@/components/StadiumMap"), { ssr: false });
 
 const STADIUMS = [
-  { slug: "bernabeu", name: "Santiago Bernabéu", city: "Madrid" },
-  { slug: "emirates", name: "Emirates Stadium", city: "London" },
+  { id: "bernabeu", name: "Santiago Bernabéu", data: bernabeu },
+  { id: "emirates", name: "Emirates Stadium", data: emirates },
 ];
 
 export default function HomePage() {
+  const [selected, setSelected] = useState<string>("bernabeu");
+  const current = STADIUMS.find((s) => s.id === selected);
+
   return (
-    <div style={{ width: "100vw", height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#0f172a", color: "#fff", fontFamily: "system-ui, sans-serif", gap: 32 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2, color: "rgba(255,255,255,0.15)" }}>Stadium Maps</h1>
-      <div style={{ display: "flex", gap: 16 }}>
+    <div style={{ width: "100vw", height: "100vh", position: "relative", background: "#000" }}>
+      {/* Map */}
+      {current && <StadiumMap data={current.data} />}
+
+      {/* Stadium selector */}
+      <div style={{ position: "absolute", top: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8, zIndex: 10, background: "rgba(0,0,0,0.7)", padding: "6px 8px", borderRadius: 12, backdropFilter: "blur(8px)" }}>
         {STADIUMS.map((s) => (
-          <Link key={s.slug} href={`/venues/${s.slug}`} style={{ textDecoration: "none" }}>
-            <div style={{ width: 220, padding: "24px 32px", background: "#1e293b", borderRadius: 16, border: "1px solid #334155", cursor: "pointer", transition: "all 0.2s" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#334155"; e.currentTarget.style.borderColor = "#475569"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#1e293b"; e.currentTarget.style.borderColor = "#334155"; }}>
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{s.name}</div>
-              <div style={{ fontSize: 13, color: "#64748b" }}>{s.city}</div>
-            </div>
-          </Link>
+          <button key={s.id} onClick={() => setSelected(s.id)}
+            style={{ padding: "8px 20px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", background: selected === s.id ? "#3b82f6" : "rgba(255,255,255,0.08)", color: selected === s.id ? "#fff" : "#94a3b8", transition: "all 0.15s" }}>
+            {s.name}
+          </button>
         ))}
       </div>
     </div>
