@@ -119,7 +119,8 @@ const StadiumPitch: React.FC<Props> = ({ config, scale }) => {
     stripes,
   } = config;
 
-  const lineStrokeWidth = boundary.strokeWidth;
+  // Scale-compensated — thinner than section strokes (which use 1/scale)
+  const lineStrokeWidth = (0.65 / scale);
   const lineOpacity = 0.85;
 
   const inner = (
