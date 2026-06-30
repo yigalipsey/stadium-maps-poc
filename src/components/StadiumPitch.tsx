@@ -120,12 +120,12 @@ const StadiumPitch: React.FC<Props> = ({ config, scale }) => {
   } = config;
 
   // Scale-compensated — thinner than section strokes (which use 1/scale)
-  const lineStrokeWidth = (0.65 / scale);
+  const lineStrokeWidth = (0.45 / scale);
   const lineOpacity = 0.85;
 
   const inner = (
     <>
-      {/* 🌱 Grass base */}
+      {/* 🌱 Grass base — exact JSON dimensions */}
       <Rect
         x={grass.x}
         y={grass.y}
@@ -135,19 +135,23 @@ const StadiumPitch: React.FC<Props> = ({ config, scale }) => {
         fill="#1e7a1d"
       />
 
-      {/* 🌿 Grass stripes (optional) */}
-      {stripes?.map((s, i) => (
-        <Rect
-          key={`stripe-${i}`}
-          x={s.x}
-          y={s.y}
-          width={s.width}
-          height={s.height}
-          fill="#268a24"
-          opacity={0.4}
-          listening={false}
-        />
-      ))}
+      {/* 🌿 Grass stripes — alternating, clipped to pitch */}
+      <Group clipX={boundary.x} clipY={boundary.y} clipWidth={boundary.width} clipHeight={boundary.height}>
+        {Array.from({ length: 12 }, (_, i) =>
+          i % 2 === 0 ? (
+            <Rect
+              key={`stripe-${i}`}
+              x={boundary.x + (i / 12) * boundary.width}
+              y={boundary.y}
+              width={boundary.width / 12}
+              height={boundary.height}
+              fill="#268a24"
+              opacity={0.35}
+              listening={false}
+            />
+          ) : null
+        )}
+      </Group>
 
       {/* ⚪ Pitch boundary */}
       <Rect

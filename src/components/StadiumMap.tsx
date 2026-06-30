@@ -89,12 +89,6 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
   const [panY, setPanY] = useState(0);
   const [isPanning, setIsPanning] = useState(false);
 
-  // Pinch zoom tracking
-  const pinchRef = useRef<{ dist: number | null; zoom: number; cx: number; cy: number }>({
-    dist: null, zoom: 1, cx: 0, cy: 0,
-  });
-  const [dragEnabled, setDragEnabled] = useState(true);
-
   useEffect(() => {
     const h = () => { if (containerRef.current) setStageSize({ width: containerRef.current.offsetWidth, height: containerRef.current.offsetHeight }); };
     h(); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h);
@@ -141,39 +135,6 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
     setZoom(1); setPanX(0); setPanY(0);
   };
 
-  // ── Pinch zoom (mobile) ─────────────────────────────────
-  const handleTouchMove = (e: any) => {
-    const stage = e.target.getStage();
-    if (!stage) return;
-    const touches = e.evt.touches;
-    if (touches.length === 2) {
-      setDragEnabled(false); // disable drag during pinch
-      const p1 = { x: touches[0].clientX, y: touches[0].clientY };
-      const p2 = { x: touches[1].clientX, y: touches[1].clientY };
-      const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-      const cx = (p1.x + p2.x) / 2;
-      const cy = (p1.y + p2.y) / 2;
-
-      if (pinchRef.current.dist !== null) {
-        const ratio = dist / pinchRef.current.dist;
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchRef.current.zoom * ratio));
-        // Scale pan to keep pinch center fixed
-        const scaleChange = newZoom / pinchRef.current.zoom;
-        setPanX(cx - (cx - pinchRef.current.cx) * scaleChange);
-        setPanY(cy - (cy - pinchRef.current.cy) * scaleChange);
-        setZoom(newZoom);
-      }
-      pinchRef.current = { dist, zoom, cx, cy };
-    }
-  };
-
-  const handleTouchEnd = (e: any) => {
-    if (e.evt.touches.length < 2) {
-      pinchRef.current.dist = null;
-      setDragEnabled(true);
-    }
-  };
-
   return (
     <div
       ref={containerRef}
@@ -192,14 +153,12 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
         width={stageSize.width} height={stageSize.height}
         scaleX={zoom} scaleY={zoom}
         x={panX} y={panY}
-        draggable={dragEnabled}
+        draggable
         onWheel={handleWheel}
         onDragStart={() => setIsPanning(true)}
         onDragEnd={handleDragEnd}
         onDblClick={handleDoubleClick}
         onDblTap={handleDoubleClick}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         <Layer>
           <Group x={baseX} y={baseY} scaleX={baseScale} scaleY={baseScale}>
@@ -217,6 +176,38 @@ export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: 
       {/* Zoom badge */}
       <div style={{ position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.7)", color: "#fff", padding: "4px 14px", borderRadius: 20, fontSize: 12, fontFamily: "monospace", pointerEvents: "none" }}>
         {Math.round(zoom * 100)}%
+      </div>
+
+      {/* Zoom buttons */}
+      <div style={{ position: "absolute", bottom: 16, right: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+        <button
+          onClick={() => {
+            const newZoom = Math.min(MAX_ZOOM, zoom * ZOOM_SPEED);
+            setZoom(newZoom);
+          }}
+          style={{
+            width: 36, height: 36, borderRadius: 8,
+            border: "1px solid rgba(255,255,255,0.15)",
+            background: "rgba(0,0,0,0.6)", color: "#fff",
+            fontSize: 20, fontWeight: 700, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            lineHeight: 1, padding: 0,
+          }}
+        >+</button>
+        <button
+          onClick={() => {
+            const newZoom = Math.max(MIN_ZOOM, zoom / ZOOM_SPEED);
+            setZoom(newZoom);
+          }}
+          style={{
+            width: 36, height: 36, borderRadius: 8,
+            border: "1px solid rgba(255,255,255,0.15)",
+            background: "rgba(0,0,0,0.6)", color: "#fff",
+            fontSize: 20, fontWeight: 700, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            lineHeight: 1, padding: 0,
+          }}
+        >−</button>
       </div>
     </div>
   );
