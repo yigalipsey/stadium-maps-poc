@@ -69,7 +69,7 @@ export default function StadiumMap({ data }: Props) {
 
   return (
     <div ref={containerRef} style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#000", borderRadius: 24, overflow: "hidden" }}>
-      <Stage width={stageSize.w} height={stageSize.h}>
+      <Stage width={stageSize.width} height={stageSize.height}>
         <Layer>
           <Group x={gx} y={gy} scaleX={scale} scaleY={scale}>
             <StadiumPitch config={data.pitch} scale={scale} />
