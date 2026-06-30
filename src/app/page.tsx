@@ -12,8 +12,13 @@ const STADIUMS = [
   { id: "emirates", name: "Emirates Stadium", city: "London", country: "England", data: emirates },
 ];
 
+const RANGES: [number, number][] = [
+  [0, 100], [100, 200], [200, 300], [300, 400],
+  [400, 500], [500, 600], [600, 700], [700, 800],
+];
+
 const useMobile = () => {
-  const [mobile, setMobile] = React.useState(false);
+  const [mobile, setMobile] = useState(false);
   React.useEffect(() => {
     const check = () => setMobile(window.innerWidth < 768);
     check(); window.addEventListener("resize", check);
@@ -28,34 +33,45 @@ export default function HomePage() {
   const venue = current;
   const mobile = useMobile();
 
+  // Range filter: hover = preview, click = lock
+  const [hoverRange, setHoverRange] = useState<[number, number] | null>(null);
+  const [lockedRange, setLockedRange] = useState<[number, number] | null>(null);
+  const activeRange = lockedRange || hoverRange;
+
   return (
     <div className="layout">
       {/* Map panel */}
       <div className="map-panel">
-        {current && <StadiumMap data={current.data} zoom={mobile ? 0.85 : 1} />}
+        {current && (
+          <StadiumMap
+            data={current.data}
+            zoom={mobile ? 0.85 : 1}
+            highlightRange={activeRange}
+          />
+        )}
       </div>
 
       {/* Side panel */}
-      <div className="side-panel" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: mobile ? 16 : 40, color: "#f8fafc", gap: mobile ? 12 : 24 }}>
+      <div className="side-panel" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: mobile ? 12 : 32, color: "#f8fafc", gap: mobile ? 8 : 16 }}>
         {/* Title */}
         <div style={{ textAlign: "center" }}>
-          <h1 style={{ fontSize: mobile ? 20 : 32, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4, color: "#f8fafc" }}>
+          <h1 style={{ fontSize: mobile ? 18 : 24, fontWeight: 900, textTransform: "uppercase", letterSpacing: 2, marginBottom: 4, color: "#f8fafc" }}>
             {venue?.name}
           </h1>
-          <p style={{ fontSize: mobile ? 12 : 14, color: "#64748b", fontWeight: 500 }}>
+          <p style={{ fontSize: mobile ? 11 : 13, color: "#64748b", fontWeight: 500 }}>
             {venue?.city}, {venue?.country}
           </p>
         </div>
 
         {/* Stadium selector */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", maxWidth: 280 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, width: "100%", maxWidth: 260 }}>
           {STADIUMS.map((s) => (
-            <button key={s.id} onClick={() => setSelected(s.id)}
+            <button key={s.id} onClick={() => { setSelected(s.id); setLockedRange(null); }}
               style={{
-                padding: mobile ? "10px 16px" : "14px 20px",
-                borderRadius: 12,
+                padding: mobile ? "8px 14px" : "10px 16px",
+                borderRadius: 10,
                 border: selected === s.id ? "2px solid #3b82f6" : "2px solid transparent",
-                fontSize: mobile ? 13 : 15,
+                fontSize: mobile ? 12 : 14,
                 fontWeight: 700,
                 cursor: "pointer",
                 background: selected === s.id ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.04)",
@@ -63,28 +79,62 @@ export default function HomePage() {
                 transition: "all 0.15s",
                 textAlign: "left",
               }}
-              onMouseEnter={(e) => {
-                if (selected !== s.id) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                  e.currentTarget.style.color = "#cbd5e1";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (selected !== s.id) {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.04)";
-                  e.currentTarget.style.color = "#94a3b8";
-                }
-              }}
             >
-              <div style={{ fontSize: "inherit", fontWeight: "inherit" }}>{s.name}</div>
+              {s.name}
               <div style={{ fontSize: mobile ? 10 : 11, color: "#64748b", fontWeight: 400, marginTop: 2 }}>{s.city}, {s.country}</div>
             </button>
           ))}
         </div>
 
+        {/* Divider */}
+        <div style={{ width: "60%", height: 1, background: "#1e293b" }} />
+
+        {/* Range filter — 8 buttons in 2 rows × 4 cols */}
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: mobile ? 10 : 11, color: "#475569", fontWeight: 600, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8 }}>
+            Section Ranges
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+            {RANGES.map(([lo, hi]) => {
+              const isHovered = hoverRange?.[0] === lo && hoverRange?.[1] === hi;
+              const isLocked = lockedRange?.[0] === lo && lockedRange?.[1] === hi;
+              const isActive = isHovered || isLocked;
+              return (
+                <button key={lo}
+                  style={{
+                    padding: mobile ? "6px 4px" : "8px 6px",
+                    borderRadius: 8,
+                    border: isActive ? "2px solid #f59e0b" : "2px solid #1e293b",
+                    fontSize: mobile ? 11 : 13,
+                    fontWeight: 700,
+                    fontFamily: "monospace",
+                    cursor: "pointer",
+                    background: isLocked ? "rgba(245,158,11,0.2)"
+                      : isHovered ? "rgba(245,158,11,0.1)"
+                      : "rgba(255,255,255,0.03)",
+                    color: isActive ? "#fbbf24" : "#64748b",
+                    transition: "all 0.1s",
+                  }}
+                  onMouseEnter={() => setHoverRange([lo, hi])}
+                  onMouseLeave={() => setHoverRange(null)}
+                  onClick={() => setLockedRange(isLocked ? null : [lo, hi])}
+                >
+                  {lo}–{hi}
+                </button>
+              );
+            })}
+          </div>
+          {lockedRange && (
+            <button onClick={() => setLockedRange(null)}
+              style={{ marginTop: 8, padding: "4px 12px", borderRadius: 6, border: "none", background: "rgba(255,255,255,0.06)", color: "#94a3b8", fontSize: 11, cursor: "pointer" }}>
+              Clear filter
+            </button>
+          )}
+        </div>
+
         {/* Hint */}
-        <p style={{ fontSize: mobile ? 10 : 12, color: "#475569", textAlign: "center", marginTop: 8 }}>
-          Scroll to zoom · Drag to pan · Double-click to reset
+        <p style={{ fontSize: mobile ? 10 : 11, color: "#475569", textAlign: "center", marginTop: "auto" }}>
+          Hover range → preview · Click → lock
         </p>
       </div>
     </div>

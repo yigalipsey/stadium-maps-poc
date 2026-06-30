@@ -14,27 +14,48 @@ export interface StadiumData {
 
 interface Props {
   data: StadiumData;
-  zoom?: number; // pre-zoom multiplier: 0.85 = smaller, 1 = default
+  zoom?: number;       // pre-zoom multiplier: 0.85 = smaller, 1 = default
+  highlightRange?: [number, number] | null; // [min, max] for section-id range highlight
 }
+
+// ── Helpers ────────────────────────────────────────────
+/** Parse numeric block ID: "703" → 703, "PALCO" → null */
+const numericId = (id: string): number | null => {
+  const n = parseInt(id, 10);
+  return isNaN(n) ? null : n;
+};
+
+/** Check if block's numeric ID falls in [min, max] */
+const inRange = (id: string, range: [number, number] | null | undefined): boolean => {
+  if (!range) return false;
+  const n = numericId(id);
+  return n !== null && n >= range[0] && n < range[1];
+};
 
 // ── Section block ──────────────────────────────────────
 const SectionBlock: React.FC<{
   section: { id: string; points: number[]; label: string | null; cx: number; cy: number };
   isActive: boolean;
   isHovered: boolean;
+  isHighlighted: boolean;
   scale: number;
   onHover: (id: string | null) => void;
   onClick: (id: string) => void;
-}> = ({ section, isActive, isHovered, scale, onHover, onClick }) => {
+}> = ({ section, isActive, isHovered, isHighlighted, scale, onHover, onClick }) => {
   const isTech = section.id.startsWith("0") || section.id.startsWith("technical");
+
+  // Priority: active > hovered > highlighted > default
+  const fill = isActive ? "#1d4ed8" : isHovered ? "#3b82f6" : isHighlighted ? "#f59e0b" : "#1e293b";
+  const stroke = isActive || isHovered ? "#fff" : isHighlighted ? "#fbbf24" : "#334155";
+
   return (
     <Group>
       <Line
         points={section.points}
         closed={true}
-        fill={isActive ? "#1d4ed8" : isHovered ? "#3b82f6" : "#1e293b"}
-        stroke={isActive || isHovered ? "#fff" : "#334155"}
-        strokeWidth={1 / scale}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={isHighlighted && !isActive && !isHovered ? 0.6 / scale : 1 / scale}
         onMouseEnter={(e) => { if (isTech) return; e.target.getStage()!.container().style.cursor = "pointer"; onHover(section.id); }}
         onMouseLeave={(e) => { if (isTech) return; e.target.getStage()!.container().style.cursor = "default"; onHover(null); }}
         onClick={() => !isTech && onClick(section.id)}
@@ -55,7 +76,7 @@ const MAX_ZOOM = 6.0;
 const ZOOM_SPEED = 1.08;
 
 // ── Generic Stadium Map ────────────────────────────────
-export default function StadiumMap({ data, zoom: preZoom = 1 }: Props) {
+export default function StadiumMap({ data, zoom: preZoom = 1, highlightRange }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const [selected, setSelected] = useState<string | null>(null);
@@ -140,6 +161,7 @@ export default function StadiumMap({ data, zoom: preZoom = 1 }: Props) {
             {data.sections.map((s, i) => (
               <SectionBlock key={i} section={s} scale={totalScale}
                 isActive={selected === s.id} isHovered={hovered === s.id}
+                isHighlighted={inRange(s.id, highlightRange)}
                 onHover={setHovered} onClick={setSelected} />
             ))}
           </Group>
