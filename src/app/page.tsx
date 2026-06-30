@@ -17,12 +17,17 @@ export default function HomePage() {
   const current = STADIUMS.find((s) => s.id === selected);
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative", background: "#000" }}>
-      {/* Map */}
-      {current && <StadiumMap data={current.data} />}
+    <div className="layout">
+      {/* Left / Top: Interactive Map */}
+      <div className="map-panel">
+        {current && <StadiumMap data={current.data} />}
+      </div>
 
-      {/* Stadium selector */}
-      <div style={{ position: "absolute", top: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8, zIndex: 10, background: "rgba(0,0,0,0.7)", padding: "6px 8px", borderRadius: 12, backdropFilter: "blur(8px)" }}>
+      {/* Right / Bottom: Reserved for future use */}
+      <div className="side-panel" />
+
+      {/* Stadium selector — overlays the map */}
+      <div style={{ position: "fixed", top: 24, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8, zIndex: 10, background: "rgba(0,0,0,0.7)", padding: "6px 8px", borderRadius: 12, backdropFilter: "blur(8px)" }}>
         {STADIUMS.map((s) => (
           <button key={s.id} onClick={() => setSelected(s.id)}
             style={{ padding: "8px 20px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", background: selected === s.id ? "#3b82f6" : "rgba(255,255,255,0.08)", color: selected === s.id ? "#fff" : "#94a3b8", transition: "all 0.15s" }}>

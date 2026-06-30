@@ -1,2 +1,38 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { width: 100%; height: 100%; overflow: hidden; background: #0f172a; font-family: system-ui, -apple-system, sans-serif; }
+
+/* Layout: map takes half-screen, rest reserved for side panel */
+.layout {
+  display: flex;
+  flex-direction: row;
+  width: 100vw;
+  height: 100vh;
+}
+
+.map-panel {
+  width: 50vw;
+  height: 100vh;
+}
+
+.side-panel {
+  width: 50vw;
+  height: 100vh;
+  background: #0f172a;
+  border-left: 1px solid #1e293b;
+}
+
+@media (max-width: 767px) {
+  .layout {
+    flex-direction: column;
+  }
+  .map-panel {
+    width: 100vw;
+    height: 50vh;
+  }
+  .side-panel {
+    width: 100vw;
+    height: 50vh;
+    border-left: none;
+    border-top: 1px solid #1e293b;
+  }
+}

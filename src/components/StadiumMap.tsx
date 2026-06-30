@@ -118,7 +118,7 @@ export default function StadiumMap({ data }: Props) {
       style={{
         width: "100%", height: "100%",
         display: "flex", alignItems: "center", justifyContent: "center",
-        background: "#000", borderRadius: 24, overflow: "hidden",
+        background: "#000", overflow: "hidden",
         cursor: isPanning ? "grabbing" : "grab",
         position: "relative",
       }}
